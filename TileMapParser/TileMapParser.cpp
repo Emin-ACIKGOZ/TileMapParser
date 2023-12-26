@@ -9,10 +9,8 @@ TileMapParser::TileMapParser(const std::string& filename) : fileStream(filename)
 std::vector<std::vector<short>> TileMapParser::parseTileMap(short targetIndex) {
     std::vector<std::vector<short>> result;
     std::string line;
-    bool found = false;
 
-    while (!fileStream.eof()) {
-        std::getline(fileStream, line);
+    while (std::getline(fileStream, line)) {
         if (line.empty()) {
             continue; // Skip empty lines
         }
@@ -23,50 +21,45 @@ std::vector<std::vector<short>> TileMapParser::parseTileMap(short targetIndex) {
         }
 
         if (index == targetIndex) {
-            found = true;
-            break;
-        }
+            std::getline(fileStream, line); // Read the row and column format line
+            std::istringstream formatStream(line);
+            int rows, cols;
+            if (!(formatStream >> rows >> cols)) {
+                throw std::runtime_error("Invalid row/column format");
+            }
 
-        // Skip to the next TileMap block
-        std::string brace;
-        while (std::getline(fileStream, brace) && brace != "}") {
-            // Skip lines until the closing brace
-        }
-    }
+            std::getline(fileStream, line); // Read the string with space-separated short values
+            std::istringstream dataStream(line);
+            std::vector<short> rowData;
+            short value;
+            while (dataStream >> value) {
+                rowData.push_back(value);
+            }
 
-    if (!found) {
-        throw std::runtime_error("Desired index not found");
-    }
+            if (static_cast<int>(rowData.size()) != rows * cols) {
+                throw std::runtime_error("Invalid data size for TileMap");
+            }
 
-    std::string brace;
-    if (!(std::getline(fileStream, brace)) || brace != "{") {
-        throw std::runtime_error("Missing or invalid opening brace");
-    }
-
-    while (std::getline(fileStream, line) && line != "}") {
-        std::istringstream ss(line);
-        std::vector<short> row;
-        short num;
-        while (ss >> num) {
-            row.push_back(num);
-            char comma;
-            if (!(ss >> std::ws >> comma) || comma != ',') {
-                if (!ss.eof()) {
-                    throw std::runtime_error("Invalid TileMap format");
+            // Fill the 2D vector
+            for (int i = 0; i < rows; ++i) {
+                std::vector<short> row;
+                for (int j = 0; j < cols; ++j) {
+                    row.push_back(rowData[i * cols + j]);
                 }
-                break;
+                result.push_back(row);
+            }
+            return result;
+        }
+        else {
+            // Skip to the next TileMap block
+            while (std::getline(fileStream, line) && !line.empty()) {
+                // Skip lines until an empty line
             }
         }
-        result.push_back(row);
     }
 
-    if (line != "}") {
-        throw std::runtime_error("Missing closing brace");
-    }
-
-    return result;
+    throw std::runtime_error("Desired index not found");
 }
-
 
 void printTileMap(const std::vector<std::vector<short>>& tileMap) {
     for (const auto& row : tileMap) {
@@ -78,7 +71,6 @@ void printTileMap(const std::vector<std::vector<short>>& tileMap) {
 }
 
 int main() {
-    //CORRECT THIS
     TileMapParser parser("C:/EMIN SALIH/Programming/C++ Projects/TileMapParser/TileMapParser/test.txt");
 
     try {
