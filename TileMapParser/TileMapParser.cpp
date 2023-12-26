@@ -79,7 +79,7 @@ void printTileMap(const std::vector<std::vector<short>>& tileMap) {
 
 int main() {
     //CORRECT THIS
-    TileMapParser parser("C:/EMIN SALIH/Programming/C++ Projects/TileMapParser/TileMapParser/test.txt");
+    TileMapParser parser("test.txt");
 
     try {
         std::vector<std::vector<short>> tileMap = parser.parseTileMap(2);
